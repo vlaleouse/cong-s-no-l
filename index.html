@@ -14,6 +14,7 @@
       --leave:#b8d2ff;     /* bleu */
       --accent:#8b7dff;    /* violet */
       --border:rgba(255,255,255,.12);
+      --soft:rgba(255,255,255,.06);
     }
     *{box-sizing:border-box}
     body{
@@ -68,6 +69,7 @@
     .dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
     .dot.present{background:var(--present)}
     .dot.leave{background:var(--leave)}
+
     .results{
       display:grid;
       grid-template-columns: 320px 1fr;
@@ -82,7 +84,7 @@
       border:1px solid var(--border);
       border-radius:12px;
       background:rgba(17,26,51,.55);
-      max-height:420px;
+      max-height:460px;
       overflow:auto;
     }
     .item{
@@ -95,6 +97,7 @@
     .item:hover{background:rgba(139,125,255,.12)}
     .item.active{background:rgba(139,125,255,.18);outline:1px solid rgba(139,125,255,.35)}
     .item small{color:var(--muted)}
+
     .details{
       padding:14px;
       border:1px solid var(--border);
@@ -103,6 +106,7 @@
     }
     .details h2{margin:0 0 6px 0;font-size:18px}
     .meta{color:var(--muted);font-size:13px;margin-bottom:10px}
+
     .ranges{
       display:flex;flex-direction:column;gap:8px;margin:10px 0 14px 0;
     }
@@ -122,27 +126,87 @@
       font-size:12px;
       white-space:nowrap;
     }
-    .strip{
+
+    /* ✅ Nouvelle vue : timeline compacte + tableau clair */
+    .dayview{
       display:grid;
-      grid-auto-flow:column;
-      grid-auto-columns:minmax(70px, 1fr);
-      gap:8px;
-      overflow:auto;
-      padding-bottom:6px;
+      grid-template-columns: 1fr 340px;
+      gap:12px;
+      align-items:start;
     }
-    .cell{
+    @media (max-width: 980px){
+      .dayview{grid-template-columns:1fr}
+    }
+
+    .timelineWrap{
       border:1px solid var(--border);
       border-radius:12px;
-      padding:8px 10px;
-      font-size:12px;
-      display:flex;flex-direction:column;gap:4px;
-      min-height:54px;
+      background:rgba(255,255,255,.03);
+      padding:10px;
     }
-    .cell .d{font-weight:700}
-    .cell.present{background:rgba(191,243,207,.16)}
-    .cell.leave{background:rgba(184,210,255,.18)}
-    .cell .s{color:rgba(255,255,255,.85)}
+    .timelineHeader{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      margin-bottom:8px;
+    }
+    .timeline{
+      display:flex;
+      gap:6px;
+      overflow-x:auto;
+      padding-bottom:6px;
+      scroll-snap-type:x mandatory;
+    }
+    .sq{
+      flex:0 0 auto;
+      width:54px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:8px 8px;
+      scroll-snap-align:start;
+      background:rgba(17,26,51,.5);
+    }
+    .sq .d{font-weight:800;font-size:12px}
+    .sq .s{font-size:12px;color:rgba(255,255,255,.85);margin-top:4px}
+    .sq.present{background:rgba(191,243,207,.14)}
+    .sq.leave{background:rgba(184,210,255,.16)}
     .hint{color:var(--muted);font-size:12px;margin-top:10px}
+
+    .tableWrap{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:rgba(255,255,255,.03);
+      overflow:hidden;
+    }
+    .tableHead{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      background:rgba(17,26,51,.55);
+    }
+    .tableHead b{font-size:13px}
+    .scrollY{
+      max-height:240px;
+      overflow:auto;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+    th, td{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+      white-space:nowrap;
+    }
+    th{color:var(--muted);font-weight:700;background:rgba(255,255,255,.02)}
+    tr:hover td{background:rgba(139,125,255,.08)}
+    .tag{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      font-size:12px;
+      background:rgba(17,26,51,.55);
+    }
+    .tag .dot{margin:0}
     .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
     button{
       border:1px solid var(--border);
@@ -154,7 +218,6 @@
       font-size:13px;
     }
     button:hover{background:rgba(139,125,255,.14)}
-    .muted{color:var(--muted)}
     .empty{
       padding:16px;border:1px dashed rgba(255,255,255,.18);
       border-radius:12px;color:var(--muted);
@@ -167,7 +230,7 @@
     <header>
       <div>
         <h1>Planning congés – période Noël (19/12/2025 → 06/01/2026)</h1>
-        <div class="sub">Recherche par prénom/nom : affiche les dates de congés payés + une vue rapide jour par jour.</div>
+        <div class="sub">Recherche par prénom/nom : affiche les dates de congés payés + une vue simple et lisible.</div>
       </div>
       <div class="legend">
         <span class="pill"><span class="dot present"></span>Présent</span>
@@ -199,7 +262,6 @@
 /**
  * Données (extraites du tableau envoyé) :
  * - Période affichée : 19/12/2025 → 06/01/2026 (inclus)
- * - "Congés Payés" = congés sur ces dates
  */
 const DATA = [
   { name: "Christophe", leaves: [{ start: "2025-12-20", end: "2026-01-05" }] },
@@ -232,9 +294,7 @@ function normalize(str){
     .toLowerCase()
     .trim();
 }
-
 function parseISO(d){ return new Date(d + "T00:00:00"); }
-
 function fmtFR(iso){
   const d = parseISO(iso);
   const dd = String(d.getDate()).padStart(2,"0");
@@ -242,42 +302,57 @@ function fmtFR(iso){
   const yyyy = d.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
 }
-
 function dayLabel(iso){
   const d = parseISO(iso);
   const dd = String(d.getDate()).padStart(2,"0");
   const mm = String(d.getMonth()+1).padStart(2,"0");
   return `${dd}/${mm}`;
 }
-
 function eachDayISO(startISO, endISO){
   const out = [];
   let d = parseISO(startISO);
   const end = parseISO(endISO);
   while(d <= end){
-    const iso = d.toISOString().slice(0,10);
-    out.push(iso);
+    out.push(d.toISOString().slice(0,10));
     d.setDate(d.getDate()+1);
   }
   return out;
 }
-
 const PERIOD_DAYS = eachDayISO(PERIOD_START, PERIOD_END);
 
 function isWithin(dateISO, startISO, endISO){
   const t = parseISO(dateISO).getTime();
   return t >= parseISO(startISO).getTime() && t <= parseISO(endISO).getTime();
 }
-
 function statusFor(employee, dateISO){
   for(const r of employee.leaves){
     if(isWithin(dateISO, r.start, r.end)) return "Congés Payés";
   }
   return "Présent";
 }
-
 function daysInLeaveWithinPeriod(employee){
   return PERIOD_DAYS.filter(d => statusFor(employee,d) === "Congés Payés").length;
+}
+
+/** Regrouper les jours CP en périodes continues (utile si un jour tu as plusieurs plages) */
+function compactLeaveRanges(employee){
+  const days = PERIOD_DAYS.filter(d => statusFor(employee, d) === "Congés Payés");
+  if(days.length === 0) return [];
+  const ranges = [];
+  let start = days[0];
+  let prev = days[0];
+  for(let i=1;i<days.length;i++){
+    const cur = days[i];
+    const prevDate = parseISO(prev); prevDate.setDate(prevDate.getDate()+1);
+    const expected = prevDate.toISOString().slice(0,10);
+    if(cur !== expected){
+      ranges.push({start, end: prev});
+      start = cur;
+    }
+    prev = cur;
+  }
+  ranges.push({start, end: prev});
+  return ranges;
 }
 
 function renderList(filtered, activeName=null){
@@ -286,7 +361,6 @@ function renderList(filtered, activeName=null){
     $list.innerHTML = `<div class="empty">Aucun résultat.</div>`;
     return;
   }
-
   for(const e of filtered){
     const cpDays = daysInLeaveWithinPeriod(e);
     const el = document.createElement("div");
@@ -304,49 +378,85 @@ function renderList(filtered, activeName=null){
 }
 
 function renderDetails(employee){
-  const ranges = employee.leaves.map(r => {
-    const days = eachDayISO(r.start, r.end).length;
-    return { ...r, days };
-  });
+  const cpDays = daysInLeaveWithinPeriod(employee);
+  const compact = compactLeaveRanges(employee);
 
-  const rangesHtml = ranges.map(r => `
-    <div class="range">
-      <span class="badge">Congés payés</span>
-      <div><b>Du</b> ${fmtFR(r.start)} <b>au</b> ${fmtFR(r.end)}</div>
-      <div class="muted">(${r.days} jour(s) calendaires)</div>
-    </div>
-  `).join("");
+  const compactHtml = compact.length
+    ? compact.map(r => `
+        <div class="range">
+          <span class="badge">Congés payés</span>
+          <div><b>Du</b> ${fmtFR(r.start)} <b>au</b> ${fmtFR(r.end)}</div>
+          <div class="pill">${eachDayISO(r.start, r.end).length} jour(s)</div>
+        </div>
+      `).join("")
+    : `<div class="range"><span class="badge">Présent</span><div>Aucun congé sur la période.</div></div>`;
 
-  const stripHtml = PERIOD_DAYS.map(d => {
+  const timelineHtml = PERIOD_DAYS.map(d => {
     const st = statusFor(employee, d);
     const cls = st === "Congés Payés" ? "leave" : "present";
     return `
-      <div class="cell ${cls}" title="${fmtFR(d)} — ${st}">
+      <div class="sq ${cls}" title="${fmtFR(d)} — ${st}">
         <div class="d">${dayLabel(d)}</div>
         <div class="s">${st === "Congés Payés" ? "Congés" : "Présent"}</div>
       </div>
     `;
   }).join("");
 
-  const cpDays = daysInLeaveWithinPeriod(employee);
+  const rowsHtml = PERIOD_DAYS.map(d => {
+    const st = statusFor(employee, d);
+    const tag = st === "Congés Payés"
+      ? `<span class="tag"><span class="dot leave"></span>Congés payés</span>`
+      : `<span class="tag"><span class="dot present"></span>Présent</span>`;
+    return `
+      <tr>
+        <td>${fmtFR(d)}</td>
+        <td>${tag}</td>
+      </tr>
+    `;
+  }).join("");
 
   $details.innerHTML = `
     <h2>${employee.name}</h2>
     <div class="meta">
-      Sur la période affichée : <b>${cpDays}</b> jour(s) en <b>congés payés</b> — le reste en <b>présent</b>.
+      Période : <b>${fmtFR(PERIOD_START)}</b> → <b>${fmtFR(PERIOD_END)}</b> •
+      <b>${cpDays}</b> jour(s) en <b>congés payés</b>.
     </div>
 
-    <div class="ranges">${rangesHtml}</div>
+    <div class="ranges">${compactHtml}</div>
 
-    <div style="font-weight:800;margin:6px 0 8px 0;">Vue jour par jour</div>
-    <div class="strip">${stripHtml}</div>
+    <div class="dayview">
+      <div class="timelineWrap">
+        <div class="timelineHeader">
+          <div style="font-weight:800">Vue rapide (défilable)</div>
+          <div class="pill">Scroll horizontal</div>
+        </div>
+        <div class="timeline">${timelineHtml}</div>
 
-    <div class="btns">
-      <button onclick="window.print()">Imprimer / PDF</button>
-      <button onclick="copySummary()">Copier le résumé</button>
+        <div class="btns">
+          <button onclick="window.print()">Imprimer / PDF</button>
+          <button onclick="copySummary()">Copier le résumé</button>
+        </div>
+        <div class="hint">Astuce : tu peux chercher sans accent (ex : “raphaelle”).</div>
+      </div>
+
+      <div class="tableWrap">
+        <div class="tableHead">
+          <b>Jour par jour (lisible)</b>
+          <span class="pill">Scroll vertical</span>
+        </div>
+        <div class="scrollY">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      </div>
     </div>
-
-    <div class="hint">Astuce : tu peux chercher sans accent (ex : “raphaelle”).</div>
   `;
 }
 
@@ -354,8 +464,11 @@ function copySummary(){
   const active = window.__activeEmployee;
   if(!active) return;
   const e = DATA.find(x => x.name === active);
-  const parts = e.leaves.map(r => `Congés payés : du ${fmtFR(r.start)} au ${fmtFR(r.end)}`).join(" | ");
-  navigator.clipboard.writeText(`${e.name} — ${parts}`);
+  const compact = compactLeaveRanges(e);
+  const text = compact.length
+    ? compact.map(r => `Congés payés : du ${fmtFR(r.start)} au ${fmtFR(r.end)}`).join(" | ")
+    : "Aucun congé sur la période.";
+  navigator.clipboard.writeText(`${e.name} — ${text}`);
 }
 
 function selectEmployee(name){
@@ -363,9 +476,9 @@ function selectEmployee(name){
   const e = DATA.find(x => x.name === name);
   renderDetails(e);
 
-  // rerender list with active highlight
   const q = normalize($q.value);
-  const filtered = DATA.filter(x => normalize(x.name).includes(q));
+  const filtered = DATA.filter(x => normalize(x.name).includes(q))
+                       .sort((a,b) => a.name.localeCompare(b.name, "fr"));
   renderList(filtered, name);
 }
 
@@ -382,7 +495,7 @@ $q.addEventListener("input", onSearch);
 
 // init
 $count.textContent = `${DATA.length} salariés`;
-renderList(DATA.sort((a,b)=>a.name.localeCompare(b.name, "fr")));
+renderList([...DATA].sort((a,b)=>a.name.localeCompare(b.name, "fr")));
 </script>
 </body>
 </html>
