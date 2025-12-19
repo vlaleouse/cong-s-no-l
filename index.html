@@ -7,15 +7,12 @@
   <style>
     :root{
       --bg:#0b1020;
-      --card:#111a33;
       --text:#e9eefc;
       --muted:#aeb9de;
       --present:rgba(191,243,207,.18); /* vert doux */
       --leave:rgba(184,210,255,.30);   /* bleu */
-      --leave2:rgba(184,210,255,.18);
       --accent:#8b7dff;                /* violet */
       --border:rgba(255,255,255,.12);
-      --soft:rgba(255,255,255,.06);
       --shadow: 0 10px 30px rgba(0,0,0,.25);
     }
     *{box-sizing:border-box}
@@ -84,7 +81,6 @@
     .dot.leave{background:rgba(184,210,255,.7)}
     .dot.present{background:rgba(191,243,207,.6)}
 
-    /* Résumé "qui est en congé ce jour" */
     .summary{
       display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;
       padding:12px;
@@ -113,21 +109,17 @@
       color:var(--muted);
     }
 
-    /* Grille */
     .gridWrap{
       border:1px solid var(--border);
       border-radius:14px;
       overflow:hidden;
       background:rgba(17,26,51,.45);
     }
-    .scroll{
-      overflow:auto;
-      max-height:520px;
-    }
+    .scroll{overflow:auto;max-height:520px;}
     table{
       border-collapse:separate;
       border-spacing:0;
-      width:max-content; /* pour scroll horizontal */
+      width:max-content;
       min-width:100%;
       font-size:13px;
     }
@@ -165,11 +157,11 @@
     }
     tbody tr:hover td{background:rgba(139,125,255,.08)}
     .cell.leave{background:var(--leave)}
-    .cell.present{background:transparent}
-    .cell.present.soft{background:rgba(255,255,255,.02)}
+    .cell.present{background:var(--present)}
     .cell.blank{background:transparent;color:transparent}
     .colActive{outline:2px solid rgba(139,125,255,.35); outline-offset:-2px}
     .cell.leave strong{color:#eef4ff}
+    .cell.present strong{color:#f2fff6}
 
     .dow{display:block;font-size:11px;color:rgba(255,255,255,.55);font-weight:700;margin-top:3px}
     .date{display:block;font-size:12px;color:rgba(255,255,255,.9)}
@@ -183,7 +175,7 @@
       <div>
         <h1>Planning congés – Noël (19/12/2025 → 06/01/2026)</h1>
         <div class="sub">
-          Vue globale ultra lisible : <b>grille salariés × dates</b> + clique sur une date pour voir <b>qui est en congé</b> ce jour-là.
+          Grille claire : <b>salariés × dates</b>. Clique une date pour voir <b>qui est en congé</b> ce jour-là.
         </div>
       </div>
       <div class="legend">
@@ -200,16 +192,21 @@
             <input id="q" type="text" placeholder="Chercher un salarié…" autocomplete="off" />
           </div>
 
+          <!-- ✅ Nouveaux filtres -->
           <label class="toggle">
-            <input id="onlyLeave" type="checkbox" />
-            Afficher seulement les congés
+            <input id="showLeave" type="checkbox" checked />
+            Afficher Congés (CP)
+          </label>
+          <label class="toggle">
+            <input id="showPresent" type="checkbox" checked />
+            Afficher Présent
           </label>
         </div>
 
         <div class="right">
           <span id="count" class="pill">—</span>
           <select id="dateSelect" aria-label="Choisir une date"></select>
-          <button id="todayBtn" type="button">Aller au 19/12</button>
+          <button id="goStart" type="button">Aller au 19/12</button>
         </div>
       </div>
 
@@ -224,12 +221,11 @@
         </div>
       </div>
 
-      <div class="hint">Astuce : clique directement sur une <b>date</b> (en haut) pour mettre la colonne en surbrillance.</div>
+      <div class="hint">Astuce : clique sur une <b>date</b> (en haut) pour surligner la colonne.</div>
     </div>
   </div>
 
 <script>
-/*** DONNÉES (comme ton tableau) ***/
 const DATA = [
   { name: "Christophe", leaves: [{ start: "2025-12-20", end: "2026-01-05" }] },
   { name: "Cécile",     leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
@@ -255,8 +251,9 @@ const $count = document.getElementById("count");
 const $chips = document.getElementById("chips");
 const $summaryTitle = document.getElementById("summaryTitle");
 const $dateSelect = document.getElementById("dateSelect");
-const $onlyLeave = document.getElementById("onlyLeave");
-const $todayBtn = document.getElementById("todayBtn");
+const $showLeave = document.getElementById("showLeave");
+const $showPresent = document.getElementById("showPresent");
+const $goStart = document.getElementById("goStart");
 
 function normalize(str){
   return (str || "")
@@ -304,7 +301,6 @@ function isLeave(employee, dateISO){
   return employee.leaves.some(r => isWithin(dateISO, r.start, r.end));
 }
 
-/*** UI State ***/
 let activeDate = PERIOD_START;
 
 function fillDateSelect(){
@@ -321,8 +317,8 @@ function fillDateSelect(){
 function renderSummary(employees){
   const off = employees.filter(e => isLeave(e, activeDate)).map(e => e.name);
   $summaryTitle.textContent = `En congé le ${fmtFR(activeDate)} : (${off.length})`;
-
   $chips.innerHTML = "";
+
   if(off.length === 0){
     const empty = document.createElement("div");
     empty.className = "chip empty";
@@ -340,8 +336,12 @@ function renderSummary(employees){
 
 function renderGrid(){
   const q = normalize($q.value);
-  const onlyLeave = $onlyLeave.checked;
 
+  // filtres cases cochées
+  const showLeave = $showLeave.checked;
+  const showPresent = $showPresent.checked;
+
+  // si aucune case cochée -> on n'affiche rien (on garde une grille vide)
   const employees = DATA
     .filter(e => normalize(e.name).includes(q))
     .sort((a,b)=>a.name.localeCompare(b.name,"fr"));
@@ -350,10 +350,7 @@ function renderGrid(){
 
   renderSummary(employees);
 
-  // Build table
   let html = "";
-
-  // Header
   html += "<thead><tr>";
   html += `<th>Salarié</th>`;
   for(const d of DAYS){
@@ -365,22 +362,27 @@ function renderGrid(){
   }
   html += "</tr></thead>";
 
-  // Body
   html += "<tbody>";
   for(const e of employees){
     html += `<tr><th>${e.name}</th>`;
     for(const d of DAYS){
       const off = isLeave(e, d);
       const active = d === activeDate ? " colActive" : "";
-      if(onlyLeave){
-        // mode ultra clean : on ne montre que les congés (sinon vide)
-        html += off
-          ? `<td class="cell leave${active}"><strong>CP</strong></td>`
-          : `<td class="cell blank${active}">.</td>`;
-      }else{
-        html += off
-          ? `<td class="cell leave${active}"><strong>CP</strong></td>`
-          : `<td class="cell present soft${active}"></td>`;
+
+      if(off){
+        // CP
+        if(showLeave){
+          html += `<td class="cell leave${active}"><strong>CP</strong></td>`;
+        } else {
+          html += `<td class="cell blank${active}">.</td>`;
+        }
+      } else {
+        // Présent
+        if(showPresent){
+          html += `<td class="cell present${active}"><strong>PR</strong></td>`;
+        } else {
+          html += `<td class="cell blank${active}">.</td>`;
+        }
       }
     }
     html += "</tr>";
@@ -389,7 +391,6 @@ function renderGrid(){
 
   $grid.innerHTML = html;
 
-  // Click on header date to set active date
   $grid.querySelectorAll("thead th[data-date]").forEach(th=>{
     th.addEventListener("click", ()=>{
       activeDate = th.dataset.date;
@@ -401,12 +402,13 @@ function renderGrid(){
 
 /*** Events ***/
 $q.addEventListener("input", renderGrid);
-$onlyLeave.addEventListener("change", renderGrid);
+$showLeave.addEventListener("change", renderGrid);
+$showPresent.addEventListener("change", renderGrid);
 $dateSelect.addEventListener("change", (e)=>{
   activeDate = e.target.value;
   renderGrid();
 });
-$todayBtn.addEventListener("click", ()=>{
+$goStart.addEventListener("click", ()=>{
   activeDate = PERIOD_START;
   $dateSelect.value = activeDate;
   renderGrid();
