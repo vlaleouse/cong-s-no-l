@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Planning congés – Noël 2025/2026</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111a33;
+      --text:#e9eefc;
+      --muted:#aeb9de;
+      --present:#bff3cf;   /* vert */
+      --leave:#b8d2ff;     /* bleu */
+      --accent:#8b7dff;    /* violet */
+      --border:rgba(255,255,255,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1000px 600px at 10% 0%, rgba(139,125,255,.25), transparent 60%),
+                  radial-gradient(900px 500px at 90% 10%, rgba(184,210,255,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+    header{
+      display:flex;gap:14px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    h1{margin:0;font-size:22px;letter-spacing:.2px}
+    .sub{margin-top:6px;color:var(--muted);font-size:13px}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .search{
+      flex:1 1 360px;
+      display:flex;gap:10px;align-items:center;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(17,26,51,.7);
+    }
+    .search input{
+      width:100%;
+      border:0;
+      outline:0;
+      background:transparent;
+      color:var(--text);
+      font-size:14px;
+    }
+    .pill{
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      color:var(--muted);
+      font-size:12px;
+      background:rgba(17,26,51,.55);
+      white-space:nowrap;
+    }
+    .legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
+    .dot.present{background:var(--present)}
+    .dot.leave{background:var(--leave)}
+    .results{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width: 900px){
+      .results{grid-template-columns:1fr}
+    }
+    .list{
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:rgba(17,26,51,.55);
+      max-height:420px;
+      overflow:auto;
+    }
+    .item{
+      padding:10px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      display:flex;justify-content:space-between;align-items:center;
+      gap:10px;
+    }
+    .item:hover{background:rgba(139,125,255,.12)}
+    .item.active{background:rgba(139,125,255,.18);outline:1px solid rgba(139,125,255,.35)}
+    .item small{color:var(--muted)}
+    .details{
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:rgba(17,26,51,.55);
+    }
+    .details h2{margin:0 0 6px 0;font-size:18px}
+    .meta{color:var(--muted);font-size:13px;margin-bottom:10px}
+    .ranges{
+      display:flex;flex-direction:column;gap:8px;margin:10px 0 14px 0;
+    }
+    .range{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+    }
+    .badge{
+      background:rgba(184,210,255,.16);
+      border:1px solid rgba(184,210,255,.35);
+      color:#eaf1ff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .strip{
+      display:grid;
+      grid-auto-flow:column;
+      grid-auto-columns:minmax(70px, 1fr);
+      gap:8px;
+      overflow:auto;
+      padding-bottom:6px;
+    }
+    .cell{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:12px;
+      display:flex;flex-direction:column;gap:4px;
+      min-height:54px;
+    }
+    .cell .d{font-weight:700}
+    .cell.present{background:rgba(191,243,207,.16)}
+    .cell.leave{background:rgba(184,210,255,.18)}
+    .cell .s{color:rgba(255,255,255,.85)}
+    .hint{color:var(--muted);font-size:12px;margin-top:10px}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button{
+      border:1px solid var(--border);
+      background:rgba(17,26,51,.6);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:13px;
+    }
+    button:hover{background:rgba(139,125,255,.14)}
+    .muted{color:var(--muted)}
+    .empty{
+      padding:16px;border:1px dashed rgba(255,255,255,.18);
+      border-radius:12px;color:var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Planning congés – période Noël (19/12/2025 → 06/01/2026)</h1>
+        <div class="sub">Recherche par prénom/nom : affiche les dates de congés payés + une vue rapide jour par jour.</div>
+      </div>
+      <div class="legend">
+        <span class="pill"><span class="dot present"></span>Présent</span>
+        <span class="pill"><span class="dot leave"></span>Congés payés</span>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="row">
+        <div class="search" role="search">
+          <span style="color:var(--accent);font-weight:800">🔎</span>
+          <input id="q" type="text" placeholder="Ex : Victor, Cécile, Raphaëlle…" autocomplete="off" />
+          <span id="count" class="pill">13 salariés</span>
+        </div>
+        <span class="pill">Données : tableau fourni (Noël)</span>
+      </div>
+
+      <div class="results">
+        <div class="list" id="list"></div>
+
+        <div class="details" id="details">
+          <div class="empty">Tape un prénom (ex : <b>Victor</b>) puis clique sur un salarié.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/**
+ * Données (extraites du tableau envoyé) :
+ * - Période affichée : 19/12/2025 → 06/01/2026 (inclus)
+ * - "Congés Payés" = congés sur ces dates
+ */
+const DATA = [
+  { name: "Christophe", leaves: [{ start: "2025-12-20", end: "2026-01-05" }] },
+  { name: "Cécile",     leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
+  { name: "Émile",      leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
+  { name: "Gérald",     leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
+  { name: "Laëtitia",   leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
+  { name: "Marc Antoine",leaves:[{ start: "2025-12-19", end: "2026-01-05" }] },
+  { name: "Nathalie",   leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
+  { name: "Ouadilia",   leaves: [{ start: "2025-12-20", end: "2026-01-05" }] },
+  { name: "Philippe",   leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
+  { name: "Raphaëlle Fe", leaves:[{ start: "2025-12-19", end: "2026-01-05" }] },
+  { name: "Raphaelle Sauvage", leaves:[{ start: "2025-12-25", end: "2026-01-05" }] },
+  { name: "Séverine",   leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
+  { name: "Victor",     leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
+];
+
+const PERIOD_START = "2025-12-19";
+const PERIOD_END   = "2026-01-06";
+
+const $q = document.getElementById("q");
+const $list = document.getElementById("list");
+const $details = document.getElementById("details");
+const $count = document.getElementById("count");
+
+function normalize(str){
+  return (str || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function parseISO(d){ return new Date(d + "T00:00:00"); }
+
+function fmtFR(iso){
+  const d = parseISO(iso);
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function dayLabel(iso){
+  const d = parseISO(iso);
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  return `${dd}/${mm}`;
+}
+
+function eachDayISO(startISO, endISO){
+  const out = [];
+  let d = parseISO(startISO);
+  const end = parseISO(endISO);
+  while(d <= end){
+    const iso = d.toISOString().slice(0,10);
+    out.push(iso);
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+
+const PERIOD_DAYS = eachDayISO(PERIOD_START, PERIOD_END);
+
+function isWithin(dateISO, startISO, endISO){
+  const t = parseISO(dateISO).getTime();
+  return t >= parseISO(startISO).getTime() && t <= parseISO(endISO).getTime();
+}
+
+function statusFor(employee, dateISO){
+  for(const r of employee.leaves){
+    if(isWithin(dateISO, r.start, r.end)) return "Congés Payés";
+  }
+  return "Présent";
+}
+
+function daysInLeaveWithinPeriod(employee){
+  return PERIOD_DAYS.filter(d => statusFor(employee,d) === "Congés Payés").length;
+}
+
+function renderList(filtered, activeName=null){
+  $list.innerHTML = "";
+  if(filtered.length === 0){
+    $list.innerHTML = `<div class="empty">Aucun résultat.</div>`;
+    return;
+  }
+
+  for(const e of filtered){
+    const cpDays = daysInLeaveWithinPeriod(e);
+    const el = document.createElement("div");
+    el.className = "item" + (e.name === activeName ? " active" : "");
+    el.innerHTML = `
+      <div>
+        <div style="font-weight:800">${e.name}</div>
+        <small>${cpDays} jour(s) de congés sur la période</small>
+      </div>
+      <div class="pill">Voir</div>
+    `;
+    el.addEventListener("click", () => selectEmployee(e.name));
+    $list.appendChild(el);
+  }
+}
+
+function renderDetails(employee){
+  const ranges = employee.leaves.map(r => {
+    const days = eachDayISO(r.start, r.end).length;
+    return { ...r, days };
+  });
+
+  const rangesHtml = ranges.map(r => `
+    <div class="range">
+      <span class="badge">Congés payés</span>
+      <div><b>Du</b> ${fmtFR(r.start)} <b>au</b> ${fmtFR(r.end)}</div>
+      <div class="muted">(${r.days} jour(s) calendaires)</div>
+    </div>
+  `).join("");
+
+  const stripHtml = PERIOD_DAYS.map(d => {
+    const st = statusFor(employee, d);
+    const cls = st === "Congés Payés" ? "leave" : "present";
+    return `
+      <div class="cell ${cls}" title="${fmtFR(d)} — ${st}">
+        <div class="d">${dayLabel(d)}</div>
+        <div class="s">${st === "Congés Payés" ? "Congés" : "Présent"}</div>
+      </div>
+    `;
+  }).join("");
+
+  const cpDays = daysInLeaveWithinPeriod(employee);
+
+  $details.innerHTML = `
+    <h2>${employee.name}</h2>
+    <div class="meta">
+      Sur la période affichée : <b>${cpDays}</b> jour(s) en <b>congés payés</b> — le reste en <b>présent</b>.
+    </div>
+
+    <div class="ranges">${rangesHtml}</div>
+
+    <div style="font-weight:800;margin:6px 0 8px 0;">Vue jour par jour</div>
+    <div class="strip">${stripHtml}</div>
+
+    <div class="btns">
+      <button onclick="window.print()">Imprimer / PDF</button>
+      <button onclick="copySummary()">Copier le résumé</button>
+    </div>
+
+    <div class="hint">Astuce : tu peux chercher sans accent (ex : “raphaelle”).</div>
+  `;
+}
+
+function copySummary(){
+  const active = window.__activeEmployee;
+  if(!active) return;
+  const e = DATA.find(x => x.name === active);
+  const parts = e.leaves.map(r => `Congés payés : du ${fmtFR(r.start)} au ${fmtFR(r.end)}`).join(" | ");
+  navigator.clipboard.writeText(`${e.name} — ${parts}`);
+}
+
+function selectEmployee(name){
+  window.__activeEmployee = name;
+  const e = DATA.find(x => x.name === name);
+  renderDetails(e);
+
+  // rerender list with active highlight
+  const q = normalize($q.value);
+  const filtered = DATA.filter(x => normalize(x.name).includes(q));
+  renderList(filtered, name);
+}
+
+function onSearch(){
+  const q = normalize($q.value);
+  const filtered = DATA
+    .filter(x => normalize(x.name).includes(q))
+    .sort((a,b) => a.name.localeCompare(b.name, "fr"));
+  $count.textContent = `${filtered.length} salarié(s)`;
+  renderList(filtered, window.__activeEmployee);
+}
+
+$q.addEventListener("input", onSearch);
+
+// init
+$count.textContent = `${DATA.length} salariés`;
+renderList(DATA.sort((a,b)=>a.name.localeCompare(b.name, "fr")));
+</script>
+</body>
+</html>
