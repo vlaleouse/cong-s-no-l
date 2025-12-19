@@ -9,9 +9,9 @@
       --bg:#0b1020;
       --text:#e9eefc;
       --muted:#aeb9de;
-      --present:rgba(191,243,207,.18); /* vert doux */
-      --leave:rgba(184,210,255,.30);   /* bleu */
-      --accent:#8b7dff;                /* violet */
+      --present:rgba(191,243,207,.18);
+      --leave:rgba(184,210,255,.30);
+      --accent:#8b7dff;
       --border:rgba(255,255,255,.12);
       --shadow: 0 10px 30px rgba(0,0,0,.25);
     }
@@ -192,7 +192,6 @@
             <input id="q" type="text" placeholder="Chercher un salarié…" autocomplete="off" />
           </div>
 
-          <!-- ✅ Nouveaux filtres -->
           <label class="toggle">
             <input id="showLeave" type="checkbox" checked />
             Afficher Congés (CP)
@@ -226,19 +225,48 @@
   </div>
 
 <script>
+/** ✅ DONNÉES MISES À JOUR (avec tes exceptions de présence) **/
 const DATA = [
-  { name: "Christophe", leaves: [{ start: "2025-12-20", end: "2026-01-05" }] },
+  // Christophe : CP du 20/12 au 05/01, mais présent 23 & 24/12
+  { name: "Christophe", leaves: [
+    { start: "2025-12-20", end: "2025-12-22" },
+    { start: "2025-12-25", end: "2026-01-05" },
+  ]},
+
   { name: "Cécile",     leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
   { name: "Émile",      leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
   { name: "Gérald",     leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
   { name: "Laëtitia",   leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
-  { name: "Marc Antoine",leaves:[{ start: "2025-12-19", end: "2026-01-05" }] },
+  { name: "Marc Antoine", leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
   { name: "Nathalie",   leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
-  { name: "Ouadilia",   leaves: [{ start: "2025-12-20", end: "2026-01-05" }] },
-  { name: "Philippe",   leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
-  { name: "Raphaëlle Fe", leaves:[{ start: "2025-12-19", end: "2026-01-05" }] },
-  { name: "Raphaelle Sauvage", leaves:[{ start: "2025-12-25", end: "2026-01-05" }] },
-  { name: "Séverine",   leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
+
+  // Ouadilia : CP du 20/12 au 05/01, mais présente le 24/12
+  { name: "Ouadilia", leaves: [
+    { start: "2025-12-20", end: "2025-12-23" },
+    { start: "2025-12-25", end: "2026-01-05" },
+  ]},
+
+  // Philippe : CP du 19/12 au 05/01, mais présent 26, 29, 30/12
+  { name: "Philippe", leaves: [
+    { start: "2025-12-19", end: "2025-12-25" },
+    { start: "2025-12-27", end: "2025-12-28" },
+    { start: "2025-12-31", end: "2026-01-05" },
+  ]},
+
+  { name: "Raphaëlle Fe", leaves: [{ start: "2025-12-19", end: "2026-01-05" }] },
+
+  // Raphaelle Sauvage : CP du 25/12 au 05/01, mais présente 29 & 30/12
+  { name: "Raphaelle Sauvage", leaves: [
+    { start: "2025-12-25", end: "2025-12-28" },
+    { start: "2025-12-31", end: "2026-01-05" },
+  ]},
+
+  // Séverine : CP du 19/12 au 05/01, mais présente 29 & 30/12
+  { name: "Séverine", leaves: [
+    { start: "2025-12-19", end: "2025-12-28" },
+    { start: "2025-12-31", end: "2026-01-05" },
+  ]},
+
   { name: "Victor",     leaves: [{ start: "2025-12-25", end: "2026-01-05" }] },
 ];
 
@@ -318,7 +346,6 @@ function renderSummary(employees){
   const off = employees.filter(e => isLeave(e, activeDate)).map(e => e.name);
   $summaryTitle.textContent = `En congé le ${fmtFR(activeDate)} : (${off.length})`;
   $chips.innerHTML = "";
-
   if(off.length === 0){
     const empty = document.createElement("div");
     empty.className = "chip empty";
@@ -336,12 +363,9 @@ function renderSummary(employees){
 
 function renderGrid(){
   const q = normalize($q.value);
-
-  // filtres cases cochées
   const showLeave = $showLeave.checked;
   const showPresent = $showPresent.checked;
 
-  // si aucune case cochée -> on n'affiche rien (on garde une grille vide)
   const employees = DATA
     .filter(e => normalize(e.name).includes(q))
     .sort((a,b)=>a.name.localeCompare(b.name,"fr"));
@@ -371,18 +395,14 @@ function renderGrid(){
 
       if(off){
         // CP
-        if(showLeave){
-          html += `<td class="cell leave${active}"><strong>CP</strong></td>`;
-        } else {
-          html += `<td class="cell blank${active}">.</td>`;
-        }
+        html += showLeave
+          ? `<td class="cell leave${active}"><strong>CP</strong></td>`
+          : `<td class="cell blank${active}">.</td>`;
       } else {
         // Présent
-        if(showPresent){
-          html += `<td class="cell present${active}"><strong>PR</strong></td>`;
-        } else {
-          html += `<td class="cell blank${active}">.</td>`;
-        }
+        html += showPresent
+          ? `<td class="cell present${active}"><strong>PR</strong></td>`
+          : `<td class="cell blank${active}">.</td>`;
       }
     }
     html += "</tr>";
